@@ -22,7 +22,10 @@ static inline size_t rdtsc() {
   // asm volatile("rdtsc" : "=a"(rax), "=d"(rdx));
   // return static_cast<size_t>((rdx << 32) | rax);
 
-  return rte_rdtsc();
+  uint64_t tsc;
+
+	asm volatile("mrs %0, cntvct_el0" : "=r" (tsc));
+	return tsc;
 }
 
 /// An alias for rdtsc() to distinguish calls on the critical path
