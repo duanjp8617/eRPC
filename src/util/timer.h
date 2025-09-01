@@ -10,14 +10,19 @@
 #include <chrono>
 #include "common.h"
 
+// include dpdk's rdtsc utility
+#include <rte_cycles.h>
+
 namespace erpc {
 
 /// Return the TSC
-static inline size_t rdtsc() {
-  uint64_t rax;
-  uint64_t rdx;
-  asm volatile("rdtsc" : "=a"(rax), "=d"(rdx));
-  return static_cast<size_t>((rdx << 32) | rax);
+static inline size_t rdtsc() {  
+  // uint64_t rax;
+  // uint64_t rdx;
+  // asm volatile("rdtsc" : "=a"(rax), "=d"(rdx));
+  // return static_cast<size_t>((rdx << 32) | rax);
+
+  return rte_rdtsc();
 }
 
 /// An alias for rdtsc() to distinguish calls on the critical path
