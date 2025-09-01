@@ -154,6 +154,9 @@ make latency
    * `rdma_core` version and DPDK version
    * Operating system
 
+## Arm platform
+ * Trying to make erpc compilable on arm.
+
 ## Contact
 Anuj Kalia
 
