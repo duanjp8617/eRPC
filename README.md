@@ -154,9 +154,6 @@ make latency
    * `rdma_core` version and DPDK version
    * Operating system
 
-## Arm platform
- * Trying to make erpc compilable on arm.
-
 ## Contact
 Anuj Kalia
 
@@ -175,3 +172,42 @@ Anuj Kalia
         See the License for the specific language governing permissions and
         limitations under the License.
 
+## Arm platform
+ * Trying to make erpc compilable on arm.
+
+## Huawei SP670
+
+* In dpdk, the dev_info of SP670 is:
+  ```json
+  {device = 0xaaaaaad91fd0, driver_name = 0xfffff44270f8 "net_hinic3", if_index = 0, min_mtu = 256, max_mtu = 9600, dev_flags = 0x12019f49c,
+    min_rx_bufsize = 1024, max_rx_pktlen = 9626, max_lro_pkt_size = 65536, max_rx_queues = 64, max_tx_queues = 64, max_mac_addrs = 128,
+    max_hash_mac_addrs = 0, max_vfs = 0, max_vmdq_pools = 0, rx_seg_capa = {multi_pools = 0, offset_allowed = 0, offset_align_log2 = 0,
+      max_nseg = 0, reserved = 0}, rx_offload_capa = 664095, tx_offload_capa = 32959, rx_queue_offload_capa = 0, tx_queue_offload_capa = 0,
+    reta_size = 256, hash_key_size = 40 '(', flow_type_rss_offloads = 12220, default_rxconf = {rx_thresh = {pthresh = 0 '\000', hthresh = 0 '\000',
+        wthresh = 0 '\000'}, rx_free_thresh = 0, rx_drop_en = 0 '\000', rx_deferred_start = 0 '\000', rx_nseg = 0, share_group = 0, share_qid = 0,
+      offloads = 0, rx_seg = 0x0, reserved_64s = {0, 0}, reserved_ptrs = {0x0, 0x0}}, default_txconf = {tx_thresh = {pthresh = 0 '\000',
+        hthresh = 0 '\000', wthresh = 0 '\000'}, tx_rs_thresh = 0, tx_free_thresh = 0, tx_deferred_start = 0 '\000', offloads = 0, reserved_64s = {
+        0, 0}, reserved_ptrs = {0x0, 0x0}}, vmdq_queue_base = 0, vmdq_queue_num = 0, vmdq_pool_base = 0, rx_desc_lim = {nb_max = 16384,
+      nb_min = 128, nb_align = 1, nb_seg_max = 0, nb_mtu_seg_max = 0}, tx_desc_lim = {nb_max = 16384, nb_min = 128, nb_align = 1, nb_seg_max = 0,
+      nb_mtu_seg_max = 0}, speed_capa = 0, nb_rx_queues = 0, nb_tx_queues = 0, default_rxportconf = {burst_size = 32, ring_size = 1024,
+      nb_queues = 1}, default_txportconf = {burst_size = 32, ring_size = 1024, nb_queues = 1}, dev_capa = 0, switch_info = {name = 0x0,
+      domain_id = 65535, port_id = 0, rx_domain = 0}, reserved_64s = {0, 0}, reserved_ptrs = {0x0, 0x0}}
+  ```
+
+* To use SP670 in dpdk, we need to first bind the nic to vfio-pci. 
+
+* First, execute the following command to install vfio-pci kernel module:
+  ```shell
+  modprobe vfio enable_unsafe_noiommu_mode=1
+  echo 1 > /sys/module/vfio/parameters/enable_unsafe_noiommu_mode
+  modprobe vfio-pci
+  ```
+* Next, turn down the SP670 interface
+  ```shell
+  ip link set dev <ifname> down
+  ```
+
+* Finally, we can bind the interface to `vfio-pci` driver.
+  ```shell
+  <dpdk_dir>/usertools/dpdk-devbind.py -b vfio-pci <pcie-addr>
+  ```
