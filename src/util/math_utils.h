@@ -45,7 +45,7 @@ static inline size_t msb_index(int x) {
   
   // __builtin_clz is available on both GCC and Clang for ARM
   // It compiles to the CLZ instruction on ARMv8
-  return static_cast<size_t>(32 - __builtin_clz(static_cast<unsigned int>(x << 1)));
+  return static_cast<size_t>(32 - __builtin_clz(static_cast<unsigned int>(x)));
 }
 
 
