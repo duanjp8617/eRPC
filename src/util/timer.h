@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <rte_cycles_64.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <chrono>
@@ -24,7 +25,7 @@ static inline size_t rdtsc() {
 
   uint64_t tsc;
 
-	asm volatile("mrs %0, cntvct_el0" : "=r" (tsc));
+	asm volatile("mrs %0, pmccntr_el0" : "=r"(tsc));
 	return tsc;
 }
 
@@ -65,37 +66,31 @@ class ChronoTimer {
   std::chrono::time_point<std::chrono::high_resolution_clock> start_time_;
 };
 
-/** Read generic counter frequency */
-static inline uint64_t get_timer_frequency() {
-    uint64_t freq;
-    asm volatile("mrs %0, cntfrq_el0" : "=r"(freq));
-    return freq;
+static double do_measure_rdtsc_freq() {
+  ChronoTimer chrono_timer;
+  const uint64_t rdtsc_start = rdtsc();
+
+  // Do not change this loop! The hardcoded value below depends on this loop
+  // and prevents it from being optimized out.
+  uint64_t sum = 5;
+  for (uint64_t i = 0; i < 1000000; i++) {
+    sum += i + (sum + i) * (i % sum);
+  }
+  rt_assert(sum == 13580802877818827968ull, "Error in RDTSC freq measurement");
+
+  const uint64_t rdtsc_cycles = rdtsc() - rdtsc_start;
+  const double freq_ghz = rdtsc_cycles * 1.0 / chrono_timer.get_ns();
+  rt_assert(freq_ghz >= 0.5 && freq_ghz <= 5.0, "Invalid RDTSC frequency");
+
+  return freq_ghz;
 }
 
 static double measure_rdtsc_freq() {
-  // ChronoTimer chrono_timer;
-  // const uint64_t rdtsc_start = rdtsc();
-
-  // // Do not change this loop! The hardcoded value below depends on this loop
-  // // and prevents it from being optimized out.
-  // uint64_t sum = 5;
-  // for (uint64_t i = 0; i < 1000000; i++) {
-  //   sum += i + (sum + i) * (i % sum);
-  // }
-  // rt_assert(sum == 13580802877818827968ull, "Error in RDTSC freq measurement");
-
-  // const uint64_t rdtsc_cycles = rdtsc() - rdtsc_start;
-  // uint64_t ns = chrono_timer.get_ns();
-  // const double freq_ghz = rdtsc_cycles * 1.0 / ns;
-  // printf("freq_ghz: %f\n", freq_ghz);
-  // printf("rdtsc_cylces: %ld\n", rdtsc_cycles);
-  // printf("rdtsc_freq: %ld\n", get_timer_frequency());
-  // printf("chrono_timer ns: %ld\n", ns);
-  // printf("size_t %ld uint64_t %ld\n", sizeof(size_t), sizeof(uint64_t));
-  // rt_assert(freq_ghz >= 0.5 && freq_ghz <= 5.0, "Invalid RDTSC frequency");
-
-  // return freq_ghz;
-  return get_timer_frequency() / 1000000000.0;
+  double freq_ghz = 0.0;
+  while (freq_ghz < 2.5) {
+    freq_ghz = do_measure_rdtsc_freq();
+  }
+  return freq_ghz;
 }
 
 /// Convert cycles measured by rdtsc with frequence \p freq_ghz to seconds
