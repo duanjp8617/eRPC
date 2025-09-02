@@ -53,6 +53,7 @@ void DpdkTransport::setup_phy_port(uint16_t phy_port, size_t numa_node,
 
   if (!kIsWindows) {
     eth_conf.rxmode.mq_mode = ETH_MQ_RX_RSS;
+    eth_conf.rxmode.mtu = 8000;
     eth_conf.lpbk_mode = 1;
     eth_conf.rx_adv_conf.rss_conf.rss_key =
         const_cast<uint8_t *>(kDefaultRssKey);
